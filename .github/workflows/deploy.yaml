@@ -1,4 +1,4 @@
-name: "CodeQL Java Static Analysis + Update"
+name: "Java Compile + CodeQL Analysis"
 
 on:
   push:
@@ -20,57 +20,49 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. CodeQL 초기화
+      # 2. JDK 설치
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # 3. 소스 컴파일 (bin 폴더 생성)
+      - name: Compile Java sources
+        run: |
+          mkdir -p bin
+          # 개별 파일 컴파일하면서 오류 파일 기록
+          for f in $(find . -name "*.java"); do
+            echo "Compiling $f"
+            if ! javac -d bin "$f"; then
+              echo "❌ Compile error in $f"
+              cp "$f" "${f%.java}_update.java"
+            fi
+          done
+
+      # 4. CodeQL 초기화 (순수 분석용)
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: java
-          build-mode: none   # 빌드 없이 순수 정적 분석
+          build-mode: none   # 실제 빌드는 위에서 수행했음
 
-      # 3. CodeQL 분석 실행
+      # 5. CodeQL 분석 실행
       - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
           output: results
 
-      # 4. SARIF 결과 후처리 → _update.java 생성
-      - name: Generate _update.java files
-        run: |
-          mkdir -p fixed
-          python3 <<'EOF'
-          import json, os, shutil
-
-          sarif_file = "results/java.sarif"
-          if not os.path.exists(sarif_file):
-              print("No SARIF file found.")
-              exit(0)
-
-          with open(sarif_file, "r", encoding="utf-8") as f:
-              data = json.load(f)
-
-          results = data.get("runs", [])[0].get("results", [])
-          for r in results:
-              for loc in r.get("locations", []):
-                  uri = loc["physicalLocation"]["artifactLocation"]["uri"]
-                  # 상대경로 → 절대경로 보정
-                  if not os.path.isabs(uri):
-                      uri = os.path.join(os.getcwd(), uri)
-                  if uri.endswith(".java") and os.path.exists(uri):
-                      new_file = uri.replace(".java", "_update.java")
-                      shutil.copy(uri, new_file)
-                      print(f"✅ Created: {new_file}")
-          EOF
-
-      # 5. Git commit (파일이 있을 때만)
-      - name: Commit updated files
+      # 6. 오류난 파일 커밋 (있을 경우만)
+      - name: Commit update.java files
         run: |
           git config --global user.name "edumgt"
           git config --global user.email "kimdypm@gmail.com"
 
-          if ls *_update.java 1> /dev/null 2>&1; then
-            git add *_update.java
-            git commit -m "Add update.java files for CodeQL errors" || echo "No changes"
+          if ls **/*_update.java 1> /dev/null 2>&1; then
+            git add **/*_update.java
+            git commit -m "Add _update.java files (compile errors)" || echo "No changes"
             git push
           else
-            echo "⚠️ No _update.java files were generated."
+            echo "✅ No compile errors. Nothing to commit."
           fi

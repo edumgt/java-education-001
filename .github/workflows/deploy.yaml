@@ -1,0 +1,42 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 12 * * 0' # 매주 일요일 12:00에 실행
+
+jobs:
+  analyze:
+    name: Analyze Java with CodeQL
+    runs-on: ubuntu-latest
+
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'java' ]  # 분석 대상 언어 지정
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # CodeQL 초기화 (GraphQL 기반 엔진 포함)
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      # Java 프로젝트 빌드 (Gradle, Maven, Ant 등)
+      - name: Build with Maven
+        run: mvn clean install -DskipTests
+
+      # CodeQL 분석 실행
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3

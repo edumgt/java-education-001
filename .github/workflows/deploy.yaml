@@ -60,8 +60,8 @@ jobs:
 
       - name: Commit updated files
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
+          git config --global user.name "edumgt"
+          git config --global user.email "kimdypm@gmail.com"
           git add *_update.java
           git commit -m "Add update.java files for CodeQL errors" || echo "No changes"
           git push

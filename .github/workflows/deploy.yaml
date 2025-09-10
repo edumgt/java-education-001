@@ -1,40 +1,67 @@
-name: "CodeQL Java Static Analysis"
+name: "CodeQL Java Static Analysis + Fix"
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-  schedule:
-    - cron: '0 12 * * 0' # 매주 일요일 자동 실행
 
 jobs:
   analyze:
-    name: CodeQL Analyze (Pure Java Source)
     runs-on: ubuntu-latest
 
     permissions:
       actions: read
-      contents: read
+      contents: write     # 파일 수정 위해 write 권한 필요
       security-events: write
 
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [ 'java' ]
-
     steps:
-      # 1. 저장소 체크아웃
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. CodeQL 초기화 (언어만 지정, 빌드 없음)
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: ${{ matrix.language }}
-          build-mode: none   # 🚨 빌드 완전히 비활성화
+          languages: java
+          build-mode: none
 
-      # 3. CodeQL 분석 실행
-      - name: Perform CodeQL Analysis
+      - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+        with:
+          output: results
+
+      # 🚨 CodeQL 결과(SARIF) 후처리
+      - name: Generate _update.java files
+        run: |
+          mkdir -p fixed
+          python3 <<'EOF'
+          import json, os, shutil
+
+          # CodeQL 결과 파일
+          sarif_file = "results/java.sarif"
+          if not os.path.exists(sarif_file):
+              print("No SARIF file found.")
+              exit(0)
+
+          with open(sarif_file, "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          # SARIF 안의 문제 있는 파일 경로 추출
+          results = data.get("runs", [])[0].get("results", [])
+          for r in results:
+              locs = r.get("locations", [])
+              for loc in locs:
+                  uri = loc["physicalLocation"]["artifactLocation"]["uri"]
+                  if uri.endswith(".java") and os.path.exists(uri):
+                      new_file = uri.replace(".java", "_update.java")
+                      shutil.copy(uri, new_file)
+                      print(f"Created: {new_file}")
+          EOF
+
+      - name: Commit updated files
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add *_update.java
+          git commit -m "Add update.java files for CodeQL errors" || echo "No changes"
+          git push

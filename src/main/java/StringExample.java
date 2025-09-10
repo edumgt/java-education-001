@@ -1,16 +1,14 @@
-
+/* 한글 */
 public class StringExample {
 
     public static void main(String[] args) {
-        String name = "\\t\t\t\t\t\t";
-        String job = "프로그\\래\\머";
-        int xLength = 1000;
+        String job = "aaaaaaa";
+        String job1 = "AAAAAAA      ";
 
-        System.out.println(" job - " + job.lastIndexOf("그"));
+        System.out.println(" 대문자로 " + job.trim().toUpperCase());
+        System.out.println(" 소문자로 " + job1.trim().toLowerCase());
+        
 
-        System.out.println(job.length());
-
-        System.out.println(xLength);
 
     }
 

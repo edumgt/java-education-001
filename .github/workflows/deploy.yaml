@@ -1,4 +1,4 @@
-name: "CodeQL Java Static Analysis + Fix"
+name: "CodeQL Java Static Analysis + Update"
 
 on:
   push:
@@ -12,32 +12,34 @@ jobs:
 
     permissions:
       actions: read
-      contents: write     # 파일 수정 위해 write 권한 필요
+      contents: write
       security-events: write
 
     steps:
+      # 1. 저장소 체크아웃
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. CodeQL 초기화
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: java
-          build-mode: none
+          build-mode: none   # 빌드 없이 순수 정적 분석
 
+      # 3. CodeQL 분석 실행
       - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
           output: results
 
-      # 🚨 CodeQL 결과(SARIF) 후처리
+      # 4. SARIF 결과 후처리 → _update.java 생성
       - name: Generate _update.java files
         run: |
           mkdir -p fixed
           python3 <<'EOF'
           import json, os, shutil
 
-          # CodeQL 결과 파일
           sarif_file = "results/java.sarif"
           if not os.path.exists(sarif_file):
               print("No SARIF file found.")
@@ -46,22 +48,29 @@ jobs:
           with open(sarif_file, "r", encoding="utf-8") as f:
               data = json.load(f)
 
-          # SARIF 안의 문제 있는 파일 경로 추출
           results = data.get("runs", [])[0].get("results", [])
           for r in results:
-              locs = r.get("locations", [])
-              for loc in locs:
+              for loc in r.get("locations", []):
                   uri = loc["physicalLocation"]["artifactLocation"]["uri"]
+                  # 상대경로 → 절대경로 보정
+                  if not os.path.isabs(uri):
+                      uri = os.path.join(os.getcwd(), uri)
                   if uri.endswith(".java") and os.path.exists(uri):
                       new_file = uri.replace(".java", "_update.java")
                       shutil.copy(uri, new_file)
-                      print(f"Created: {new_file}")
+                      print(f"✅ Created: {new_file}")
           EOF
 
+      # 5. Git commit (파일이 있을 때만)
       - name: Commit updated files
         run: |
           git config --global user.name "edumgt"
           git config --global user.email "kimdypm@gmail.com"
-          git add *_update.java
-          git commit -m "Add update.java files for CodeQL errors" || echo "No changes"
-          git push
+
+          if ls *_update.java 1> /dev/null 2>&1; then
+            git add *_update.java
+            git commit -m "Add update.java files for CodeQL errors" || echo "No changes"
+            git push
+          else
+            echo "⚠️ No _update.java files were generated."
+          fi

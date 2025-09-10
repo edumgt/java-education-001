@@ -16,7 +16,7 @@ jobs:
       security-events: write
 
     steps:
-      # 1. 저장소 체크아웃
+      # 1. 소스코드 가져오기
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -27,33 +27,46 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # 3. 소스 컴파일 (bin 폴더 생성)
-      - name: Compile Java sources
+      # 3. 전체 소스 컴파일 시도
+      - name: Compile all Java sources
         run: |
           mkdir -p bin
-          # 개별 파일 컴파일하면서 오류 파일 기록
-          for f in $(find . -name "*.java"); do
-            echo "Compiling $f"
-            if ! javac -d bin "$f"; then
-              echo "❌ Compile error in $f"
-              cp "$f" "${f%.java}_update.java"
-            fi
-          done
+          echo "🚀 Compiling all Java files..."
+          if ! javac -d bin $(find . -name "*.java") 2> compile_errors.log; then
+            echo "❌ Compilation errors detected."
+            cat compile_errors.log
 
-      # 4. CodeQL 초기화 (순수 분석용)
+            # 에러난 java 파일만 추출
+            grep -oP '^[^:]+\.java' compile_errors.log | sort -u > error_files.txt
+
+            echo "⚠️ 오류난 파일 목록:"
+            cat error_files.txt
+
+            # 오류난 파일을 *_update.java 로 복사
+            while read -r file; do
+              if [ -f "$file" ]; then
+                cp "$file" "${file%.java}_update.java"
+                echo "➡️ Created: ${file%.java}_update.java"
+              fi
+            done < error_files.txt
+          else
+            echo "✅ All Java files compiled successfully."
+          fi
+
+      # 4. CodeQL 초기화 (정적 분석)
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: java
-          build-mode: none   # 실제 빌드는 위에서 수행했음
+          build-mode: none   # 빌드 스킵, 소스만 정적 분석
 
-      # 5. CodeQL 분석 실행
+      # 5. CodeQL 실행
       - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
           output: results
 
-      # 6. 오류난 파일 커밋 (있을 경우만)
+      # 6. 오류난 파일(_update.java) commit/push
       - name: Commit update.java files
         run: |
           git config --global user.name "edumgt"

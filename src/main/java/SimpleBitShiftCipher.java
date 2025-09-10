@@ -19,7 +19,7 @@ public class SimpleBitShiftCipher {
     }
 
     public static void main(String[] args) {
-        int original = 123_000;
+        int original = 12000;
         int key = 987654321;
 
         int encrypted = encrypt(original, key);

@@ -19,8 +19,8 @@ public class SimpleBitShiftCipher {
     }
 
     public static void main(String[] args) {
-        int original = "12000";
-        int key = "987654321";
+        int original = 12000;
+        int key = 987654321;
 
         int encrypted = encrypt(original, key);
         int decrypted = decrypt(encrypted, key);

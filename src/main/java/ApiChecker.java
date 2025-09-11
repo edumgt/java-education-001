@@ -5,7 +5,7 @@ import java.net.URL;
 
 public class ApiChecker {
 
-    private static final String TARGET_URL = "https://api_server/api";
+    private static final String TARGET_URL = "https://www.data.go.kr";
     private static final int INTERVAL_MS = 6000;  
 
     public static void main(String[] args) {

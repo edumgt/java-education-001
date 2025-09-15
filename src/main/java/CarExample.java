@@ -2,7 +2,7 @@ public class CarExample {
     public static void main(String[] args) {
         String action = "";
         Car myCar = new Car(); 
-        myCar.color = "빨강";
+        myCar.setColor("빨강");
         action = myCar.drive(); 
         System.out.println(action);
         
@@ -19,7 +19,34 @@ public class CarExample {
 }
 
 class Car {
-    String color;
+    private int id;       // 필드(Field)
+    private String color; // 필드(Field)
+    private int speed;    // 필드(Field)
+
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
+
+    public int getSpeed() {
+        return speed;
+    }
+
+    public void setSpeed(int speed) {
+        this.speed = speed;
+    }
 
     // 1. 기본 생성자 (색상 없음)
     Car() {

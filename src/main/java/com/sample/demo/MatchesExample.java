@@ -1,3 +1,4 @@
+package com.sample.demo;
 public class MatchesExample {
     public static void main(String[] args) {
         String str1 = "123";

@@ -1,3 +1,4 @@
+package com.sample.demo;
 public class Example2 {
     public static void main(String[] args) {
         int res1 = 30000;

@@ -1,3 +1,4 @@
+package com.sample.demo;
 public class Example4 {
     public static void main(String[] args) {
         int x = 100;

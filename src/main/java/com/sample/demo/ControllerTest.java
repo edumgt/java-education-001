@@ -1,6 +1,4 @@
-import com.sample.demo.AdminController;
-import com.sample.demo.UserController;
-
+package com.sample.demo;
 public class ControllerTest {
     public static void main(String[] args) {
         UserController userController = new UserController();

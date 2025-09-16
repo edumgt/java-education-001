@@ -1,3 +1,4 @@
+package com.sample.demo;
 import java.io.IOException;
 
 public class Example3 {

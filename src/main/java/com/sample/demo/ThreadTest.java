@@ -1,5 +1,4 @@
-import com.sample.demo.CountingThread;
-
+package com.sample.demo;
 public class ThreadTest {
     public static void main(String[] args) {
         CountingThread t = new CountingThread();

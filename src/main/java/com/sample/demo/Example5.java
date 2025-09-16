@@ -1,3 +1,4 @@
+package com.sample.demo;
 import java.util.UUID;
 
 public class Example5 {

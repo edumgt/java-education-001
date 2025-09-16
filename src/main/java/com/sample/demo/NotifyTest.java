@@ -1,5 +1,4 @@
-import com.sample.demo.*;
-
+package com.sample.demo;
 public class NotifyTest {
     public static void main(String[] args) {
         Buffer buffer = new Buffer();

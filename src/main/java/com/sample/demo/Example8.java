@@ -1,3 +1,4 @@
+package com.sample.demo;
 public class Example8 {
     public static void main(String[] args) {
         double[] scores = { 83.5, 91.6, 75.7, 98.9 };

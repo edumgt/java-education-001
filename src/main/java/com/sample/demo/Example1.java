@@ -1,3 +1,4 @@
+package com.sample.demo;
 public class Example1 {
     public static void main(String[] args) {
         // byte 타입 변수 byteVal 선언 및 초기화 (값: 10)

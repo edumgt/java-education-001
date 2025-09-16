@@ -1,3 +1,4 @@
+package com.sample.demo;
 public class Example7 {
     public static void main(String[] args) {
         String name = "홍길동";   // ✅ Heap의 String Pool에 "홍길동" 저장, name은 참조
